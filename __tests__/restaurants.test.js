@@ -83,7 +83,7 @@ describe('restaurant routes', () => {
   };
 
   it('POST /api/v1/restaurants/:id/reviews should create a new review when user is logged in', async () => {
-    const [agent] = await await registerAndLogin();
+    const [agent] = await registerAndLogin();
     const resp = await agent
       .post('/api/v1/restaurants/1/reviews')
       .send({ stars: 4, detail: 'This is new review' });
@@ -94,8 +94,17 @@ describe('restaurant routes', () => {
         "id": "4",
         "restaurantId": "1",
         "stars": 4,
-        "userId": null,
+        "userId": "4",
       }
     `);
+  });
+
+  it.skip('DELETE /api/v1/reviews/:id deletes review if user is admin or user who created it', async () => {
+    const [agent] = await registerAndLogin();
+    const resp = await agent.delete('/api/v1/reviews/1');
+    expect(resp.status).toBe(200);
+
+    const newResp = await agent.get('/api/v1/reviews/1');
+    expect(newResp.status).toBe(404);
   });
 });
