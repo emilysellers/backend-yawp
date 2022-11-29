@@ -35,5 +35,6 @@ describe('review routes', () => {
 
     const newResp = await agent.get('/api/v1/reviews/1');
     expect(newResp.status).toBe(404);
+    console.log('TEST newResp', newResp.status);
   });
 });
