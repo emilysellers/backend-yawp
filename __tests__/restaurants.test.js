@@ -2,6 +2,14 @@ const pool = require('../lib/utils/pool');
 const setup = require('../data/setup');
 const request = require('supertest');
 const app = require('../lib/app');
+const UserService = require('../lib/services/UserService.js');
+
+const mockUser = {
+  firstName: 'Test',
+  lastName: 'Tester',
+  email: 'test@test.com',
+  password: '987654',
+};
 
 describe('restaurant routes', () => {
   beforeEach(() => {
@@ -10,11 +18,13 @@ describe('restaurant routes', () => {
   afterAll(() => {
     pool.end();
   });
+
   it('GET /api/v1/restaurants/:restId returns one existing restaurant', async () => {
     const resp = await request(app).get('/api/v1/restaurants/1');
     expect(resp.status).toBe(200);
     expect(resp.body).toEqual({
       id: '1',
+      // eslint-disable-next-line quotes
       name: "Pip's Original",
       cuisine: 'American',
       cost: 1,
@@ -30,6 +40,7 @@ describe('restaurant routes', () => {
     // expect(resp.body).toMatchInlineSnapshot({});
     expect(resp.body[0]).toEqual({
       id: '1',
+      // eslint-disable-next-line quotes
       name: "Pip's Original",
       cuisine: 'American',
       cost: 1,
@@ -37,5 +48,31 @@ describe('restaurant routes', () => {
         'https://media-cdn.tripadvisor.com/media/photo-o/05/dd/53/67/an-assortment-of-donuts.jpg',
       website: 'http://www.PipsOriginal.com',
     });
+  });
+
+  const registerAndLogin = async () => {
+    const agent = request.agent(app);
+    const user = await UserService.create(mockUser);
+    await agent
+      .post('/api/v1/users/sessions')
+      .send({ email: mockUser.email, password: mockUser.password });
+    return [agent, user];
+  };
+
+  it('POST /api/v1/restaurants/:id/reviews should create a new review when user is logged in', async () => {
+    const [agent] = await await registerAndLogin();
+    const resp = await agent
+      .post('/api/v1/restaurants/1/reviews')
+      .send({ detail: 'This is new review' });
+    expect(resp.status).toBe(200);
+    expect(resp.body).toMatchInlineSnapshot(`
+      Object {
+        "detail": "This is new review",
+        "id": "4",
+        "restaurantId": "1",
+        "stars": null,
+        "userId": null,
+      }
+    `);
   });
 });
