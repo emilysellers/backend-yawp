@@ -30,11 +30,14 @@ describe('review routes', () => {
 
   it('DELETE /api/v1/reviews/:id deletes review if user is admin or user who created it', async () => {
     const [agent] = await registerAndLogin();
-    const resp = await agent.delete('/api/v1/reviews/1');
+    await agent
+      .post('/api/v1/restaurants/1/reviews')
+      .send({ stars: 5, detail: 'This is a test review to be deleted' });
+
+    const resp = await agent.delete('/api/v1/reviews/4');
     expect(resp.status).toBe(200);
 
-    const newResp = await agent.get('/api/v1/reviews/1');
+    const newResp = await agent.get('/api/v1/reviews/4');
     expect(newResp.status).toBe(404);
-    console.log('TEST newResp', newResp.status);
   });
 });
