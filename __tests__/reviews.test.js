@@ -11,6 +11,13 @@ const mockUser = {
   password: '987654',
 };
 
+const mockAdmin = {
+  firstName: 'admin',
+  lastName: 'admin',
+  email: 'admin',
+  password: '987654',
+};
+
 describe('review routes', () => {
   beforeEach(() => {
     return setup(pool);
@@ -28,7 +35,7 @@ describe('review routes', () => {
     return [agent, user];
   };
 
-  it('DELETE /api/v1/reviews/:id deletes review if user is admin or user who created it', async () => {
+  it('DELETE /api/v1/reviews/:id deletes review if user is user who created it', async () => {
     const [agent] = await registerAndLogin();
     await agent
       .post('/api/v1/restaurants/1/reviews')
@@ -38,6 +45,20 @@ describe('review routes', () => {
     expect(resp.status).toBe(200);
 
     const newResp = await agent.get('/api/v1/reviews/4');
+    expect(newResp.status).toBe(404);
+  });
+
+  it('DELETE /api/v1/reviews/:id deletes review if user is admin', async () => {
+    const agent = request.agent(app);
+    await UserService.create(mockAdmin);
+    await agent
+      .post('/api/v1/users/sessions')
+      .send({ email: mockAdmin.email, password: mockAdmin.password });
+
+    const adminResp = await agent.delete('/api/v1/reviews/1');
+    expect(adminResp.status).toBe(200);
+
+    const newResp = await agent.get('/api/v1/reviews/1');
     expect(newResp.status).toBe(404);
   });
 });
